@@ -10,13 +10,14 @@ from torch.autograd import Variable
 
 
 class Network(nn.Module):
+    NB_HIDDEN_LAYER_NEURONS = 30
 
     def __init__(self, input_size, nb_actions):
         super(Network, self).__init__()
         self.input_size = input_size
         self.nb_actions = nb_actions
-        self.fc1 = nn.Linear(input_size, 30)
-        self.fc2 = nn.Linear(30, nb_actions)
+        self.fc1 = nn.Linear(input_size, self.NB_HIDDEN_LAYER_NEURONS)
+        self.fc2 = nn.Linear(self.NB_HIDDEN_LAYER_NEURONS, nb_actions)
 
     def forward(self, state):
         x = F.relu(self.fc1(state)) # rectifier function
@@ -42,15 +43,19 @@ class ReplayMemory(object):
 
 class Dqn(object):
 
+    MEMORY_SIZE = 100000
     SAVED_FILE_NAME = 'last_brain.pth'
-    TEMPERATURE = 7
+    TEMPERATURE = 10
+    LEARNING_RATE = 0.01
+    SAMPLE_SIZE_TO_LEARN_FROM = 100
+    MAX_REWARD_WINDOW_SIZE = 1000
 
     def __init__(self, input_size, nb_actions, gamma):
         self.gamma = gamma
         self.reward_window = []
         self.model = Network(input_size, nb_actions)
-        self.memory = ReplayMemory(100000)
-        self.optimizer = optim.Adam(self.model.parameters(), lr=0.001)
+        self.memory = ReplayMemory(self.MEMORY_SIZE)
+        self.optimizer = optim.Adam(self.model.parameters(), lr=self.LEARNING_RATE)
         self.last_state = torch.Tensor(input_size).unsqueeze(0)
         self.last_action = 0
         self.last_reward = 0
@@ -71,19 +76,17 @@ class Dqn(object):
         self.optimizer.step()
 
     def update(self, reward, new_signal):
-        sample_size_to_learn_from = 100
-        max_reward_window_size = 1000
         new_state = torch.Tensor(new_signal).float().unsqueeze(0)
         self.memory.push((self.last_state, new_state, torch.LongTensor([int(self.last_action)]), torch.Tensor([self.last_reward])))
         action = self.select_action(new_state)
-        if len(self.memory.memory) > sample_size_to_learn_from:
-            batch_state, batch_next_state, batch_action, batch_reward = self.memory.sample(sample_size_to_learn_from)
+        if len(self.memory.memory) > self.SAMPLE_SIZE_TO_LEARN_FROM:
+            batch_state, batch_next_state, batch_action, batch_reward = self.memory.sample(self.SAMPLE_SIZE_TO_LEARN_FROM)
             self.learn(batch_state, batch_next_state, batch_reward, batch_action)
         self.last_action = action
         self.last_state = new_state
         self.last_reward = reward
         self.reward_window.append(reward)
-        if len(self.reward_window) > max_reward_window_size:
+        if len(self.reward_window) > self.MAX_REWARD_WINDOW_SIZE:
             del self.reward_window[0]
         return action
 
@@ -92,7 +95,7 @@ class Dqn(object):
 
     def save(self):
         torch.save({'state_dict': self.model.state_dict(),
-                    'optimizer': self.optimizer.state_dict
+                    'optimizer': self.optimizer.state_dict()
                    }, self.SAVED_FILE_NAME)
 
     def load(self):

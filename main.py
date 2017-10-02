@@ -1,12 +1,11 @@
 import numpy as np
-from random import random, randint
 import matplotlib.pyplot as plt
 import time
 
 from kivy.app import App
 from kivy.uix.widget import Widget
 from kivy.uix.button import Button
-from kivy.graphics import Color, Ellipse, Line
+from kivy.graphics import Color, Line
 from kivy.config import Config
 from kivy.properties import NumericProperty, ReferenceListProperty, ObjectProperty
 from kivy.vector import Vector
@@ -22,20 +21,17 @@ last_y = 0
 n_points = 0
 length = 0
 
-brain = Dqn(5, 3, 0.9)
+brain = Dqn(5, 3, 0.8)
 action2rotation = [0, 20, -20]
 last_reward = 0
 scores = []
 
 first_update = True
 def init():
-    global sand
-    global goal_x
-    global goal_y
-    global first_update
+    global sand, goal_x, goal_y, first_update
     sand = np.zeros((longueur, largeur))
     goal_x = 20
-    goal_y = largeur-20
+    goal_y = largeur - 20
     first_update = False
 
 last_distance = 0
@@ -59,7 +55,7 @@ class Car(Widget):
     signal2 = NumericProperty(0)
     signal3 = NumericProperty(0)
 
-    def Move(self, rotation):
+    def move(self, rotation):
         self.pos = Vector(*self.velocity) + self.pos
         self.rotation = rotation
         self.angle = self.angle + self.rotation
@@ -108,6 +104,7 @@ class Game(Widget):
         global goal_y
         global longueur
         global largeur
+        global sand
 
         longueur = self.width
         largeur = self.height
@@ -158,11 +155,11 @@ class Game(Widget):
 class PaintWidget(Widget):
 
     def on_touch_down(self, touch):
-        global length, n_points, last_x, last_y
+        global length, n_points, last_x, last_y, sand
         with self.canvas:
             Color(0.8, 0.7, 0)
             d = 10.
-            touch.ud['line'] = Line(points = (touch.x, touch.y), width = 10)
+            touch.ud['line'] = Line(points=(touch.x, touch.y), width=10)
             last_x = int(touch.x)
             last_y = int(touch.y)
             n_points = 0
@@ -170,7 +167,7 @@ class PaintWidget(Widget):
             sand[int(touch.x), int(touch.y)] = 1
 
     def on_touch_move(self, touch):
-        global length, n_points, last_x, last_y
+        global length, n_points, last_x, last_y, sand
         if touch.button == 'left':
             touch.ud['line'].points += [touch.x, touch.y]
             x = int(touch.x)
@@ -191,12 +188,12 @@ class CarApp(App):
         parent.serve_car()
         Clock.schedule_interval(parent.update, 1.0/60.0)
         self.painter = PaintWidget()
-        clear_btn = Button(text = 'Clear')
-        save_btn = Button(text = 'Save', pos = (parent.width, 0))
-        load_btn = Button(text = 'Load', pos = (2 * parent.width, 0))
-        clear_btn.bind(on_release = self.clear_canvas)
-        save_btn.bind(on_release = self.save)
-        load_btn.bind(on_release = self.load)
+        clear_btn = Button(text='Clear')
+        save_btn = Button(text='Save', pos=(parent.width, 0))
+        load_btn = Button(text='Load', pos=(2 * parent.width, 0))
+        clear_btn.bind(on_release=self.clear_canvas)
+        save_btn.bind(on_release=self.save)
+        load_btn.bind(on_release=self.load)
         parent.add_widget(self.painter)
         parent.add_widget(clear_btn)
         parent.add_widget(save_btn)
