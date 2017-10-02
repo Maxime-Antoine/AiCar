@@ -1,6 +1,5 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import time
 
 from kivy.app import App
 from kivy.uix.widget import Widget
@@ -137,7 +136,7 @@ class Game(Widget):
             self.car.x = 10
             last_reward = -1
         if self.car.x > self.width - 10:
-            self.car.x  = self.width - 10
+            self.car.x = self.width - 10
             last_reward = -1
         if self.car.y < 10:
             self.car.y = 10
@@ -158,7 +157,6 @@ class PaintWidget(Widget):
         global length, n_points, last_x, last_y, sand
         with self.canvas:
             Color(0.8, 0.7, 0)
-            d = 10.
             touch.ud['line'] = Line(points=(touch.x, touch.y), width=10)
             last_x = int(touch.x)
             last_y = int(touch.y)
@@ -176,13 +174,13 @@ class PaintWidget(Widget):
             n_points += 1.
             density = n_points / length
             touch.ud['line'].width = int(20 * density + 1)
-            sand[int(touch.x) - 10 : int(touch.x) + 10, int(touch.y) - 10 : int(touch.y) + 10] ###
+            sand[int(touch.x) - 10 : int(touch.x) + 10, int(touch.y) - 10 : int(touch.y) + 10] = 1
             last_x = x
             last_y = y
 
 
 class CarApp(App):
-    
+
     def build(self):
         parent = Game()
         parent.serve_car()
@@ -215,6 +213,6 @@ class CarApp(App):
         print('Loadig last saved brain...')
         brain.load()
 
-    
+   
 if __name__ == '__main__':
     CarApp().run()
