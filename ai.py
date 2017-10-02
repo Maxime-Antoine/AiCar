@@ -42,11 +42,65 @@ class ReplayMemory(object):
 
 class Dqn(object):
 
-    def __init__(self, *args):
-        pass
+    SAVED_FILE_NAME = 'last_brain.pth'
+    TEMPERATURE = 7
 
-    def update(*args):
-        return randint(0, 2)
+    def __init__(self, input_size, nb_actions, gamma):
+        self.gamma = gamma
+        self.reward_window = []
+        self.model = Network(input_size, nb_actions)
+        self.memory = ReplayMemory(100000)
+        self.optimizer = optim.Adam(self.model.parameters(), lr=0.001)
+        self.last_state = torch.Tensor(input_size).unsqueeze(0)
+        self.last_action = 0
+        self.last_reward = 0
 
-    def score(*args):
-        pass
+    def select_action(self, state):
+        var_state = Variable(state, volatile=True)
+        probs = F.softmax(self.model(var_state) * self.TEMPERATURE)
+        action = probs.multinomial()
+        return action.data[0, 0]
+
+    def learn(self, batch_state, batch_next_state, batch_reward, batch_action):
+        outputs = self.model(batch_state).gather(1, batch_action.unsqueeze(1)).squeeze(1)
+        next_outputs = self.model(batch_next_state).detach().max(1)[0]
+        target = self.gamma * next_outputs + batch_reward
+        td_loss = F.smooth_l1_loss(outputs, target)
+        self.optimizer.zero_grad()
+        td_loss.backward(retain_variables=True)
+        self.optimizer.step()
+
+    def update(self, reward, new_signal):
+        sample_size_to_learn_from = 100
+        max_reward_window_size = 1000
+        new_state = torch.Tensor(new_signal).float().unsqueeze(0)
+        self.memory.push((self.last_state, new_state, torch.LongTensor([int(self.last_action)]), torch.Tensor([self.last_reward])))
+        action = self.select_action(new_state)
+        if len(self.memory.memory) > sample_size_to_learn_from:
+            batch_state, batch_next_state, batch_action, batch_reward = self.memory.sample(sample_size_to_learn_from)
+            self.learn(batch_state, batch_next_state, batch_reward, batch_action)
+        self.last_action = action
+        self.last_state = new_state
+        self.last_reward = reward
+        self.reward_window.append(reward)
+        if len(self.reward_window) > max_reward_window_size:
+            del self.reward_window[0]
+        return action
+
+    def score(self):
+        return sum(self.reward_window) / (len(self.reward_window) + 1.)
+
+    def save(self):
+        torch.save({'state_dict': self.model.state_dict(),
+                    'optimizer': self.optimizer.state_dict
+                   }, self.SAVED_FILE_NAME)
+
+    def load(self):
+        if os.path.isfile(self.SAVED_FILE_NAME):
+            print("=> Loading checkpoint...")
+            checkpoint = torch.load(self.SAVED_FILE_NAME)
+            self.model.load_state_dict(checkpoint["state_dict"])
+            self.optimizer.load_state_dict(checkpoint["optimizer"])
+            print("Loaded !")
+        else:
+            print("No checkpoint to load")
