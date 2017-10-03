@@ -6,7 +6,7 @@ Learning deep Q-learning with pytorch (from https://www.udemy.com/artificial-int
 
 ## Installation of dependencies in a Conda virtualenv
 
-Using Python 3.6.2:
+Using Python 3.6.2 on Windows 10:
 
 > \> conda install pip  
 > \> pip install --upgrade pip setuptools wheel  
