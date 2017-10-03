@@ -13,6 +13,7 @@ Using Python 3.6.2:
 > \> pip install docutils pygments pypiwin32 kivy.deps.sdl2 kivy.deps.glew  
 > \> pip install kivy  
 > \> conda install -c peterjc123 pytorch  
+> \> conda install matplotlib
 
 <br/>
 
