@@ -8,6 +8,14 @@ Learning deep Q-learning with pytorch (from https://www.udemy.com/artificial-int
 
 Using Python 3.6.2:
 
+<br/>
+Use the provided conda environment file:
+
+> \> conda env create -f AiCar.yml
+
+<br/>
+Alternatively you can install the dependencies manually:
+
 > \> conda install pip  
 > \> pip install --upgrade pip setuptools wheel  
 > \> pip install docutils pygments pypiwin32 kivy.deps.sdl2 kivy.deps.glew  
